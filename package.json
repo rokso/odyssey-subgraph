@@ -1,0 +1,23 @@
+{
+  "name": "odyssey-subgraph",
+  "version": "1.0.0",
+  "repository": "https://github.com/graphprotocol/odyssey-subgraph",
+  "license": "MIT",
+  "scripts": {
+    "eslint": "eslint . --ext .ts --fix",
+    "build": "run-s codegen && graph build",
+    "codegen": "graph codegen",
+    "test": "graph test -d"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "^0.94.0",
+    "@graphprotocol/graph-ts": "^0.37.0",
+    "@typescript-eslint/eslint-plugin": "^8.20.0",
+    "@typescript-eslint/parser": "^8.20.0",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "matchstick-as": "^0.6.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  }
+}
