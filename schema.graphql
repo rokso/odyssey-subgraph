@@ -1,0 +1,80 @@
+type PositionRegistry @entity {
+  # position registry address
+  id: Bytes!
+  # current owner of PositionRegistry
+  owner: Bytes!
+  # fee collector address
+  feeCollector: Bytes!
+  # number of positions created
+  positionCount: BigInt!
+  # number of smart accounts created
+  smartAccountCount: BigInt!
+  # smart accounts
+  smartAccounts: [SmartAccount!]! @derivedFrom(field: "positionRegistry")
+  # strategies
+  strategies: [Strategy!]! @derivedFrom(field: "positionRegistry")
+}
+
+type Position @entity {
+  # position address
+  id: Bytes!
+  # owner of position (i.e. smart account)
+  owner: SmartAccount!
+  # strategy id
+  strategyId: BigInt!
+  # timestamp when position was created
+  createdAt: BigInt!
+  # timestamp when position was opened and assets are deposited
+  openedAt: BigInt!
+  # total transactions
+  txCount: BigInt!
+  # asset aka collateral address
+  asset: Bytes!
+  # total assets allocation in this position
+  totalAllocated: BigInt!
+  # price per share
+  pricePerShare: BigInt!
+  # whether position implementation is outdated
+  isOutdated: Boolean!
+  positionDailyData: [PositionDailyData!]! @derivedFrom(field: "position")
+}
+
+type Strategy @entity {
+  # strategy id, stored on-chain as strategyId.
+  id: String!
+  # position registry address
+  positionRegistry: PositionRegistry!
+  # latest implementation address
+  implementation: Bytes!
+  # current feePolicy for this strategy
+  feePolicy: Bytes!
+  # flag indicating whether strategy is active
+  isActive: Boolean!
+}
+
+type SmartAccount @entity {
+  # smart account address
+  id: Bytes!
+  # entry point contract address
+  entryPoint: EntryPoint!
+  # position registry address
+  positionRegistry: PositionRegistry!
+  # total position of this smart account
+  positionCount: BigInt!
+  # positions of this smart account
+  positions: [Position!]! @derivedFrom(field: "owner")
+}
+
+type EntryPoint @entity {
+  # entry point address
+  id: Bytes!
+  # smart accounts created by entry point
+  smartAccounts: [SmartAccount!]! @derivedFrom(field: "entryPoint")
+}
+
+type PositionDailyData @entity {
+  id: String!
+  dayStartTimestamp: Int!
+  pricePerShare: BigInt!
+  position: Position!
+}

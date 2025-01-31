@@ -12,3 +12,9 @@ node_modules
 
 # build
 generated
+build
+
+# matchstick
+tests/.bin/
+tests/.docker/
+tests/.latest.json

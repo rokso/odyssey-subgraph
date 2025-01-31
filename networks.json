@@ -1,8 +1,42 @@
 {
+  "base": {
+    "PositionRegistry": {
+      "address": "0xeE156D8ea7b96a5524CcC3CF9283ab85E80E9534",
+      "startBlock": 25696510
+    },
+    "EntryPoint": {
+      "address": "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+      "startBlock": 25696510
+    }
+  },
+  "hemi": {
+    "PositionRegistry": {
+      "address": "0xeE156D8ea7b96a5524CcC3CF9283ab85E80E9534",
+      "startBlock": 1040336
+    },
+    "EntryPoint": {
+      "address": "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+      "startBlock": 1040336
+    }
+  },
+  "mainnet": {
+    "PositionRegistry": {
+      "address": "0xeE156D8ea7b96a5524CcC3CF9283ab85E80E9534",
+      "startBlock": 21732500
+    },
+    "EntryPoint": {
+      "address": "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+      "startBlock": 21732500
+    }
+  },
   "optimism": {
     "PositionRegistry": {
-      "address": "0x447BEbdE07F6115b2714fd3a28e311b9d4a9E6f6",
-      "startBlock": 128171866
+      "address": "0xeE156D8ea7b96a5524CcC3CF9283ab85E80E9534",
+      "startBlock": 131291973
+    },
+    "EntryPoint": {
+      "address": "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+      "startBlock": 131291973
     }
   }
 }
