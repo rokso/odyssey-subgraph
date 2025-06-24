@@ -26,12 +26,20 @@ type Position @entity {
   createdAt: BigInt!
   # timestamp when position was opened and assets are deposited
   openedAt: BigInt!
+  # timestamp when position was closed
+  closedAt: BigInt!
   # total transactions
   txCount: BigInt!
   # asset aka collateral address
   asset: Bytes!
   # total assets allocation in this position
   totalAllocated: BigInt!
+  # Optional: total assets deposited in this position.
+  totalDeposited: BigInt
+  # Optional: borrow token address.
+  borrowToken: Bytes
+  # Optional: total assets borrowed by this position.
+  totalBorrowed: BigInt
   # price per share
   pricePerShare: BigInt!
   # whether position implementation is outdated
@@ -55,8 +63,6 @@ type Strategy @entity {
 type SmartAccount @entity {
   # smart account address
   id: Bytes!
-  # entry point contract address
-  entryPoint: EntryPoint!
   # position registry address
   positionRegistry: PositionRegistry!
   # total position of this smart account
@@ -65,16 +71,14 @@ type SmartAccount @entity {
   positions: [Position!]! @derivedFrom(field: "owner")
 }
 
-type EntryPoint @entity {
-  # entry point address
-  id: Bytes!
-  # smart accounts created by entry point
-  smartAccounts: [SmartAccount!]! @derivedFrom(field: "entryPoint")
-}
-
 type PositionDailyData @entity {
   id: String!
   dayStartTimestamp: Int!
+  blockTimestamp: BigInt!
+  totalAllocated: BigInt!
+  totalDeposited: BigInt!
+  totalDepositedUSD: BigInt!
+  totalBorrowed: BigInt!
   pricePerShare: BigInt!
   position: Position!
 }

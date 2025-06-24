@@ -4,12 +4,14 @@ Subgraph for Odyssey Protocol
 ## Setup
 Run `yarn install`
 
-## Generate code from Graphql schema and ABI
-Run `yarn codegen`
-
 ## Build
-Run `yarn build --network networkName`
-> Current supported networks are base, hemi, mainnet and optimism.
+To build a subgraph, a `subgraph.yaml` file is required. This file is created from a `subgraph.template.yaml` based on the network configuration found in the `/config` directory.
+Below command will automatically generate the `subgraph.yaml` file and build the subgraph.
+
+* `yarn build --network <networkName>`
+  For example: `yarn build --network ethereum`
+
+> Supported networks: `base`, `ethereum`, and `optimism`.
 
 ## Deploy
 Follow deployment guide [here](https://thegraph.com/docs/en/subgraphs/developing/deploying/using-subgraph-studio/) to understand the process of deployment.
@@ -19,5 +21,6 @@ Follow deployment guide [here](https://thegraph.com/docs/en/subgraphs/developing
 - Run `yarn graph auth <Deploy Key>
   
 **Deploy Subgraph**
-- Run `yarn deploy`
-> This command is going to ask subgraph name. As a rule of thumb you should follow "odyssey-subgraph-${networkName}" pattern for subgraph name.
+- `yarn deploy --network <networkName>` will build and deploy subgraph for given network.
+
+> Deploy command is going to ask subgraph name. As a rule of thumb you should follow "odyssey-subgraph-${networkName}" pattern for subgraph name.

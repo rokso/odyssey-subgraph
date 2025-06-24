@@ -41,6 +41,6 @@ describe('Position: PositionClosed event', () => {
     assert.fieldEquals(entityType, id, 'isOutdated', mockIsOutdated.toString())
     assert.fieldEquals(entityType, id, 'pricePerShare', '0')
     assert.fieldEquals(entityType, id, 'txCount', '0')
-    assert.fieldEquals(entityType, id, 'openedAt', '0')
+    assert.fieldEquals(entityType, id, 'openedAt', '1')
   })
 })

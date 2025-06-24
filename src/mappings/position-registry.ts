@@ -1,3 +1,4 @@
+import { Address, ethereum } from '@graphprotocol/graph-ts'
 import {
   OwnershipTransferred,
   PositionDeployed as PositionDeployedEvent,
@@ -8,10 +9,23 @@ import {
   FeePolicyUpdated,
   ImplementationUpdated,
 } from '../../generated/PositionRegistry/PositionRegistry'
-import { PositionRegistry, Position, Strategy } from '../../generated/schema'
+import { MasterOracle } from '../../generated/PositionRegistry/MasterOracle'
+import { PositionRegistry, Position, Strategy, SmartAccount, PositionDailyData } from '../../generated/schema'
 import { Position as PositionTemplate } from '../../generated/templates'
 import { ADDRESS_ZERO, BIGINT_ONE, BIGINT_ZERO } from '../utils/constants'
-import { loadOrCreateSmartAccount } from './entry-point'
+import { MASTER_ORACLE, POSITION_REGISTRY } from '../utils/address'
+import { PositionInfo } from '../utils/position-info'
+
+export function loadOrCreateSmartAccount(id: Address): SmartAccount {
+  let smartAccount = SmartAccount.load(id)
+  if (!smartAccount) {
+    smartAccount = new SmartAccount(id)
+    smartAccount.positionCount = BIGINT_ZERO
+    smartAccount.positionRegistry = ADDRESS_ZERO // set default value
+    smartAccount.save()
+  }
+  return smartAccount
+}
 
 export function handlePositionDeployed(event: PositionDeployedEvent): void {
   // at this point we know that positionRegistry is initialized
@@ -31,6 +45,7 @@ export function handlePositionDeployed(event: PositionDeployedEvent): void {
   position.strategyId = event.params.strategyId
   position.createdAt = event.block.timestamp
   position.openedAt = BIGINT_ZERO
+  position.closedAt = BIGINT_ZERO
   position.txCount = BIGINT_ZERO
   position.totalAllocated = BIGINT_ZERO
   position.pricePerShare = BIGINT_ZERO
@@ -41,9 +56,9 @@ export function handlePositionDeployed(event: PositionDeployedEvent): void {
 
   registry.positionCount = registry.positionCount.plus(BIGINT_ONE)
 
-  position.save()
   // create new datasource for the position
   PositionTemplate.create(event.params.position)
+  position.save()
 
   smartAccount.save()
   registry.save()
@@ -97,4 +112,55 @@ export function handleFeeCollectorUpdated(event: FeeCollectorUpdated): void {
   const registry = PositionRegistry.load(event.address)!
   registry.feeCollector = event.params.newFeeCollector
   registry.save()
+}
+
+export function handleDailyData(block: ethereum.Block): void {
+  const positionRegistry = PositionRegistry.load(POSITION_REGISTRY)
+
+  if (!positionRegistry) {
+    return
+  }
+
+  const oracle: MasterOracle = MasterOracle.bind(MASTER_ORACLE)
+
+  const smartAccounts = positionRegistry.smartAccounts.load()
+  for (let i = 0; i < smartAccounts.length; i++) {
+    const positions = smartAccounts[i].positions.load()
+    for (let j = 0; j < positions.length; j++) {
+      const position = Position.load(positions[j].id)
+      // check position is open
+      if (position && position.openedAt.gt(BIGINT_ZERO) && position.closedAt.equals(BIGINT_ZERO)) {
+        createOrUpdatePositionDailyData(oracle, position, block)
+      }
+    }
+  }
+}
+
+export function createOrUpdatePositionDailyData(oracle: MasterOracle, position: Position, block: ethereum.Block): void {
+  const info = new PositionInfo(Address.fromBytes(position.id))
+  // if deposit is zero then no need to track the data
+  const totalDeposited = info.totalDeposited()
+  if (totalDeposited.equals(BIGINT_ZERO)) {
+    return
+  }
+  // TODO fix this to use BigInt or at least I64
+  const timestamp = block.timestamp.toI32()
+  const dayID = timestamp / 86400 // days since unix timestamp
+  const dayStartTimestamp = dayID * 86400
+  const dailyDataId = position.id.toHex().concat('-').concat(dayID.toString())
+  let positionDailyData = PositionDailyData.load(dailyDataId)
+  if (!positionDailyData) {
+    positionDailyData = new PositionDailyData(dailyDataId)
+    positionDailyData.dayStartTimestamp = dayStartTimestamp
+    positionDailyData.blockTimestamp = block.timestamp
+
+    positionDailyData.pricePerShare = info.pricePerShare()
+    positionDailyData.totalAllocated = info.totalAllocated()
+    positionDailyData.totalDeposited = totalDeposited
+    positionDailyData.totalDepositedUSD = oracle.quoteTokenToUsd(Address.fromBytes(position.asset), totalDeposited)
+    positionDailyData.totalBorrowed = info.totalBorrowed()
+    positionDailyData.position = position.id
+
+    positionDailyData.save()
+  }
 }

@@ -1,11 +1,9 @@
-import { Address, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts'
+import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { OwnershipTransferred, PositionDeployed } from '../../generated/PositionRegistry/PositionRegistry'
 import { createMockedFunction, newMockEvent } from 'matchstick-as'
 import {
   ADDRESS_ZERO,
   ASSET_ADDRESS,
-  ENTRY_POINT_ADDRESS,
-  FAKE_ADDRESS,
   FEE_COLLECTOR_ADDRESS,
   POSITION_ADDRESS,
   POSITION_REGISTRY_ADDRESS,
@@ -15,21 +13,7 @@ import {
 import { handleOwnershipTransferred, handlePositionDeployed } from '../../src/mappings/position-registry'
 import { PositionOpened } from '../../generated/templates/Position/Position'
 import { handlePositionOpened } from '../../src/mappings/position'
-import { AccountDeployed } from '../../generated/EntryPoint/EntryPoint'
-import { handleAccountDeployed } from '../../src/mappings/entry-point'
-
-export function createAccountDeployedEvent(smartAccount: Address): AccountDeployed {
-  const event = changetype<AccountDeployed>(newMockEvent())
-
-  event.parameters = new Array()
-  event.parameters.push(new ethereum.EventParam('userOpHash', ethereum.Value.fromBytes(Bytes.fromI32(0))))
-  event.parameters.push(new ethereum.EventParam('sender', ethereum.Value.fromAddress(smartAccount)))
-  event.parameters.push(new ethereum.EventParam('factory', ethereum.Value.fromAddress(FAKE_ADDRESS)))
-  event.parameters.push(new ethereum.EventParam('paymaster', ethereum.Value.fromAddress(FAKE_ADDRESS)))
-
-  event.address = ENTRY_POINT_ADDRESS
-  return event
-}
+import { BIGINT_ZERO } from '../../src/utils/constants'
 
 export function createPositionDeployedEvent(owner: Address, strategyId: BigInt, position: Address): PositionDeployed {
   const event = changetype<PositionDeployed>(newMockEvent())
@@ -64,6 +48,27 @@ export function createPositionOpenedEvent(asset: Address, totalAllocated: BigInt
   return event
 }
 
+export function mockPositionFunctions(totalAllocated: BigInt, pricePerShare: BigInt, isOutdated: boolean): void {
+  createMockedFunction(POSITION_ADDRESS, 'borrowToken', 'borrowToken():(address)').returns([
+    ethereum.Value.fromAddress(ADDRESS_ZERO),
+  ])
+  createMockedFunction(POSITION_ADDRESS, 'pricePerShare', 'pricePerShare():(uint256)').returns([
+    ethereum.Value.fromUnsignedBigInt(pricePerShare),
+  ])
+  createMockedFunction(POSITION_ADDRESS, 'totalAllocated', 'totalAllocated():(uint256)').returns([
+    ethereum.Value.fromUnsignedBigInt(totalAllocated),
+  ])
+  createMockedFunction(POSITION_ADDRESS, 'depositedAmount', 'depositedAmount():(uint256)').returns([
+    ethereum.Value.fromUnsignedBigInt(totalAllocated),
+  ])
+  createMockedFunction(POSITION_ADDRESS, 'borrowedAmount', 'borrowedAmount():(uint256)').returns([
+    ethereum.Value.fromUnsignedBigInt(BIGINT_ZERO),
+  ])
+  createMockedFunction(POSITION_ADDRESS, 'isOutdated', 'isOutdated():(bool)').returns([
+    ethereum.Value.fromBoolean(isOutdated),
+  ])
+}
+
 export function setupPositionRegistry(): void {
   createMockedFunction(POSITION_REGISTRY_ADDRESS, 'feeCollector', 'feeCollector():(address)').returns([
     ethereum.Value.fromAddress(FEE_COLLECTOR_ADDRESS),
@@ -71,26 +76,15 @@ export function setupPositionRegistry(): void {
   handleOwnershipTransferred(createOwnershipTransferredEvent(ADDRESS_ZERO, SAFE_ADDRESS))
 }
 
-export function setupSmartAccount(): void {
-  handleAccountDeployed(createAccountDeployedEvent(SMART_ACCOUNT_ADDRESS))
-}
-
 export function deployPosition(): void {
   setupPositionRegistry()
-  setupSmartAccount()
   handlePositionDeployed(createPositionDeployedEvent(SMART_ACCOUNT_ADDRESS, BigInt.fromI32(1), POSITION_ADDRESS))
 }
 
 export function openPosition(totalAllocated: BigInt, mockPricePerShare: BigInt, mockIsOutdated: boolean): void {
   deployPosition()
-  handlePositionDeployed(createPositionDeployedEvent(SMART_ACCOUNT_ADDRESS, BigInt.fromI32(1), POSITION_ADDRESS))
 
-  createMockedFunction(POSITION_ADDRESS, 'pricePerShare', 'pricePerShare():(uint256)').returns([
-    ethereum.Value.fromUnsignedBigInt(mockPricePerShare),
-  ])
-  createMockedFunction(POSITION_ADDRESS, 'isOutdated', 'isOutdated():(bool)').returns([
-    ethereum.Value.fromBoolean(mockIsOutdated),
-  ])
+  mockPositionFunctions(totalAllocated, mockPricePerShare, mockIsOutdated)
 
   handlePositionOpened(createPositionOpenedEvent(ASSET_ADDRESS, totalAllocated))
 }

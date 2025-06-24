@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: PositionRegistry
-    network: optimism
+    network: {{network}}
     source:
       abi: PositionRegistry
-      address: "0xeE156D8ea7b96a5524CcC3CF9283ab85E80E9534"
-      startBlock: 131291973
+      address: "{{positionRegistry}}"
+      startBlock: {{startBlock}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -21,9 +21,14 @@ dataSources:
         - Position
         - Strategy
         - SmartAccount
+        - PositionDailyData
       abis:
         - name: PositionRegistry
           file: ./abis/PositionRegistry.json
+        - name: Position
+          file: ./abis/Position.json
+        - name: MasterOracle
+          file: ./abis/MasterOracle.json
       eventHandlers:
         - event: StrategyAdded(indexed uint256,indexed address,indexed address)
           handler: handleStrategyAdded
@@ -39,31 +44,15 @@ dataSources:
           handler: handleImplementationUpdated
         - event: FeeCollectorUpdated(indexed address,indexed address)
           handler: handleFeeCollectorUpdated
-  - kind: ethereum/contract
-    name: EntryPoint
-    network: optimism
-    source:
-      abi: EntryPoint
-      address: "0x0000000071727De22E5E9d8BAf0edAc6f37da032"
-      startBlock: 131291973
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.9
-      language: wasm/assemblyscript
-      file: ./src/mappings/entry-point.ts
-      entities:
-        - EntryPoint
-        - SmartAccount
-      abis:
-        - name: EntryPoint
-          file: ./abis/EntryPoint.json
-      eventHandlers:
-        - event: AccountDeployed(indexed bytes32,indexed address,address,address)
-          handler: handleAccountDeployed
+      blockHandlers:
+        - handler: handleDailyData
+          filter:
+            kind: polling
+            every: {{blocksInADay}}
 templates:
   - kind: ethereum/contract
     name: Position
-    network: optimism
+    network: {{network}}
     source:
       abi: Position
     mapping:
@@ -83,8 +72,3 @@ templates:
           handler: handleFeatureCalled
         - event: PositionClosed(indexed address,uint256)
           handler: handlePositionClosed
-      blockHandlers:
-        - handler: handleDailyData
-          filter:
-            kind: polling
-            every: 43200
