@@ -13,6 +13,8 @@ type PositionRegistry @entity {
   smartAccounts: [SmartAccount!]! @derivedFrom(field: "positionRegistry")
   # strategies
   strategies: [Strategy!]! @derivedFrom(field: "positionRegistry")
+  # daily snapshot of data
+  dailyData: [PositionRegistryDailyData!]! @derivedFrom(field: "positionRegistry")
 }
 
 type Position @entity {
@@ -44,7 +46,8 @@ type Position @entity {
   pricePerShare: BigInt!
   # whether position implementation is outdated
   isOutdated: Boolean!
-  positionDailyData: [PositionDailyData!]! @derivedFrom(field: "position")
+  # daily snapshot of data
+  dailyData: [PositionDailyData!]! @derivedFrom(field: "position")
 }
 
 type Strategy @entity {
@@ -69,16 +72,34 @@ type SmartAccount @entity {
   positionCount: BigInt!
   # positions of this smart account
   positions: [Position!]! @derivedFrom(field: "owner")
+  # daily snapshot of smart account data
+  dailyData: [SmartAccountDailyData!]! @derivedFrom(field: "smartAccount")
+}
+
+type PositionRegistryDailyData @entity {
+  id: String!
+  dayStartTimestamp: Int!
+  blockTimestamp: BigInt!
+  totalDepositedUSD: BigInt!
+  positionCount: BigInt!
+  smartAccountCount: BigInt!
+  positionRegistry: PositionRegistry!
+}
+
+type SmartAccountDailyData @entity {
+  id: String!
+  dayStartTimestamp: Int!
+  blockTimestamp: BigInt!
+  totalDepositedUSD: BigInt!
+  smartAccount: SmartAccount!
 }
 
 type PositionDailyData @entity {
   id: String!
   dayStartTimestamp: Int!
   blockTimestamp: BigInt!
-  totalAllocated: BigInt!
   totalDeposited: BigInt!
   totalDepositedUSD: BigInt!
-  totalBorrowed: BigInt!
   pricePerShare: BigInt!
   position: Position!
 }

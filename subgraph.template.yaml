@@ -22,6 +22,8 @@ dataSources:
         - Strategy
         - SmartAccount
         - PositionDailyData
+        - PositionRegistryDailyData
+        - SmartAccountDailyData
       abis:
         - name: PositionRegistry
           file: ./abis/PositionRegistry.json

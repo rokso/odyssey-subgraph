@@ -27,7 +27,8 @@ describe('Daily Data: polling block handler', () => {
     handleDailyData(newMockEvent().block)
 
     assert.entityCount(entityType, 1)
-    assert.fieldEquals(entityType, id, 'totalAllocated', totalAllocated.toString())
+    // given borrow is zero, totalDeposited is same as totalAllocated for this test.
+    assert.fieldEquals(entityType, id, 'totalDeposited', totalAllocated.toString())
     assert.fieldEquals(entityType, id, 'totalDepositedUSD', mockTotalDepositedUSD.toString())
     assert.fieldEquals(entityType, id, 'pricePerShare', pricePerShare.toString())
   })

@@ -10,7 +10,15 @@ import {
   ImplementationUpdated,
 } from '../../generated/PositionRegistry/PositionRegistry'
 import { MasterOracle } from '../../generated/PositionRegistry/MasterOracle'
-import { PositionRegistry, Position, Strategy, SmartAccount, PositionDailyData } from '../../generated/schema'
+import {
+  PositionRegistry,
+  Position,
+  Strategy,
+  SmartAccount,
+  PositionDailyData,
+  PositionRegistryDailyData,
+  SmartAccountDailyData,
+} from '../../generated/schema'
 import { Position as PositionTemplate } from '../../generated/templates'
 import { ADDRESS_ZERO, BIGINT_ONE, BIGINT_ZERO } from '../utils/constants'
 import { MASTER_ORACLE, POSITION_REGISTRY } from '../utils/address'
@@ -114,53 +122,139 @@ export function handleFeeCollectorUpdated(event: FeeCollectorUpdated): void {
   registry.save()
 }
 
-export function handleDailyData(block: ethereum.Block): void {
-  const positionRegistry = PositionRegistry.load(POSITION_REGISTRY)
-
-  if (!positionRegistry) {
-    return
+function loadOrCreateRegistryDailyData(
+  positionRegistry: PositionRegistry,
+  dayID: i32,
+  dayStartTimestamp: i32,
+  block: ethereum.Block,
+): PositionRegistryDailyData {
+  const prDailyDataId = positionRegistry.id.toHex().concat('-').concat(dayID.toString())
+  let prDailyData = PositionRegistryDailyData.load(prDailyDataId)
+  if (!prDailyData) {
+    prDailyData = new PositionRegistryDailyData(prDailyDataId)
+    prDailyData.dayStartTimestamp = dayStartTimestamp
+    prDailyData.blockTimestamp = block.timestamp
+    prDailyData.positionCount = positionRegistry.positionCount
+    prDailyData.smartAccountCount = positionRegistry.smartAccountCount
+    prDailyData.totalDepositedUSD = BIGINT_ZERO
+    prDailyData.positionRegistry = positionRegistry.id
+    prDailyData.save()
   }
-
-  const oracle: MasterOracle = MasterOracle.bind(MASTER_ORACLE)
-
-  const smartAccounts = positionRegistry.smartAccounts.load()
-  for (let i = 0; i < smartAccounts.length; i++) {
-    const positions = smartAccounts[i].positions.load()
-    for (let j = 0; j < positions.length; j++) {
-      const position = Position.load(positions[j].id)
-      // check position is open
-      if (position && position.openedAt.gt(BIGINT_ZERO) && position.closedAt.equals(BIGINT_ZERO)) {
-        createOrUpdatePositionDailyData(oracle, position, block)
-      }
-    }
-  }
+  return prDailyData
 }
 
-export function createOrUpdatePositionDailyData(oracle: MasterOracle, position: Position, block: ethereum.Block): void {
+function loadOrCreateSmartAccountDailyData(
+  smartAccount: SmartAccount,
+  dayID: i32,
+  dayStartTimestamp: i32,
+  block: ethereum.Block,
+): SmartAccountDailyData {
+  const saDailyDataId = smartAccount.id.toHex().concat('-').concat(dayID.toString())
+  let saDailyData = SmartAccountDailyData.load(saDailyDataId)
+  if (!saDailyData) {
+    saDailyData = new SmartAccountDailyData(saDailyDataId)
+    saDailyData.dayStartTimestamp = dayStartTimestamp
+    saDailyData.blockTimestamp = block.timestamp
+    saDailyData.totalDepositedUSD = BIGINT_ZERO
+    saDailyData.smartAccount = smartAccount.id
+    saDailyData.save()
+  }
+  return saDailyData
+}
+
+function processPositionDailyData(
+  oracle: MasterOracle,
+  position: Position,
+  dayID: i32,
+  dayStartTimestamp: i32,
+  block: ethereum.Block,
+): PositionDailyData | null {
+  if (!position.openedAt.gt(BIGINT_ZERO) || !position.closedAt.equals(BIGINT_ZERO)) {
+    return null
+  }
   const info = new PositionInfo(Address.fromBytes(position.id))
-  // if deposit is zero then no need to track the data
   const totalDeposited = info.totalDeposited()
   if (totalDeposited.equals(BIGINT_ZERO)) {
-    return
+    return null
   }
-  // TODO fix this to use BigInt or at least I64
-  const timestamp = block.timestamp.toI32()
-  const dayID = timestamp / 86400 // days since unix timestamp
-  const dayStartTimestamp = dayID * 86400
   const dailyDataId = position.id.toHex().concat('-').concat(dayID.toString())
   let positionDailyData = PositionDailyData.load(dailyDataId)
   if (!positionDailyData) {
     positionDailyData = new PositionDailyData(dailyDataId)
     positionDailyData.dayStartTimestamp = dayStartTimestamp
     positionDailyData.blockTimestamp = block.timestamp
-
     positionDailyData.pricePerShare = info.pricePerShare()
-    positionDailyData.totalAllocated = info.totalAllocated()
     positionDailyData.totalDeposited = totalDeposited
     positionDailyData.totalDepositedUSD = oracle.quoteTokenToUsd(Address.fromBytes(position.asset), totalDeposited)
-    positionDailyData.totalBorrowed = info.totalBorrowed()
     positionDailyData.position = position.id
-
     positionDailyData.save()
   }
+  return positionDailyData
 }
+
+export function handleDailyData(block: ethereum.Block): void {
+  const positionRegistry = PositionRegistry.load(POSITION_REGISTRY)
+  if (!positionRegistry) {
+    return
+  }
+
+  const oracle: MasterOracle = MasterOracle.bind(MASTER_ORACLE)
+
+  const timestamp = block.timestamp.toI32()
+  const dayID = timestamp / 86400
+  const dayStartTimestamp = dayID * 86400
+
+  let prDailyData = loadOrCreateRegistryDailyData(positionRegistry, dayID, dayStartTimestamp, block)
+
+  const smartAccounts = positionRegistry.smartAccounts.load()
+  for (let i = 0; i < smartAccounts.length; i++) {
+    const smartAccount = SmartAccount.load(smartAccounts[i].id)
+    if (!smartAccount) {
+      continue
+    }
+
+    let saDailyData = loadOrCreateSmartAccountDailyData(smartAccount, dayID, dayStartTimestamp, block)
+
+    const positions = smartAccounts[i].positions.load()
+    for (let j = 0; j < positions.length; j++) {
+      const position = Position.load(positions[j].id)
+      if (!position) {
+        continue
+      }
+      const positionDailyData = processPositionDailyData(oracle, position, dayID, dayStartTimestamp, block)
+      if (positionDailyData) {
+        saDailyData.totalDepositedUSD = saDailyData.totalDepositedUSD.plus(positionDailyData.totalDepositedUSD)
+        saDailyData.save()
+      }
+    }
+    prDailyData.totalDepositedUSD = prDailyData.totalDepositedUSD.plus(saDailyData.totalDepositedUSD)
+    prDailyData.save()
+  }
+}
+
+// export function createOrUpdatePositionDailyData(oracle: MasterOracle, position: Position, block: ethereum.Block): void {
+//   const info = new PositionInfo(Address.fromBytes(position.id))
+//   // if deposit is zero then no need to track the data
+//   const totalDeposited = info.totalDeposited()
+//   if (totalDeposited.equals(BIGINT_ZERO)) {
+//     return
+//   }
+//   // TODO fix this to use BigInt or at least I64
+//   const timestamp = block.timestamp.toI32()
+//   const dayID = timestamp / 86400 // days since unix timestamp
+//   const dayStartTimestamp = dayID * 86400
+//   const dailyDataId = position.id.toHex().concat('-').concat(dayID.toString())
+//   let positionDailyData = PositionDailyData.load(dailyDataId)
+//   if (!positionDailyData) {
+//     positionDailyData = new PositionDailyData(dailyDataId)
+//     positionDailyData.dayStartTimestamp = dayStartTimestamp
+//     positionDailyData.blockTimestamp = block.timestamp
+
+//     positionDailyData.pricePerShare = info.pricePerShare()
+//     positionDailyData.totalDeposited = totalDeposited
+//     positionDailyData.totalDepositedUSD = oracle.quoteTokenToUsd(Address.fromBytes(position.asset), totalDeposited)
+//     positionDailyData.position = position.id
+
+//     positionDailyData.save()
+//   }
+// }
