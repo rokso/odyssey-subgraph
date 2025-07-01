@@ -1,3 +1,4 @@
+import { Address } from '@graphprotocol/graph-ts'
 import {
   OwnershipTransferred,
   PositionDeployed as PositionDeployedEvent,
@@ -8,10 +9,20 @@ import {
   FeePolicyUpdated,
   ImplementationUpdated,
 } from '../../generated/PositionRegistry/PositionRegistry'
-import { PositionRegistry, Position, Strategy } from '../../generated/schema'
+import { PositionRegistry, Position, Strategy, SmartAccount } from '../../generated/schema'
 import { Position as PositionTemplate } from '../../generated/templates'
 import { ADDRESS_ZERO, BIGINT_ONE, BIGINT_ZERO } from '../utils/constants'
-import { loadOrCreateSmartAccount } from './entry-point'
+
+export function loadOrCreateSmartAccount(id: Address): SmartAccount {
+  let smartAccount = SmartAccount.load(id)
+  if (!smartAccount) {
+    smartAccount = new SmartAccount(id)
+    smartAccount.positionCount = BIGINT_ZERO
+    smartAccount.positionRegistry = ADDRESS_ZERO // set default value
+    smartAccount.save()
+  }
+  return smartAccount
+}
 
 export function handlePositionDeployed(event: PositionDeployedEvent): void {
   // at this point we know that positionRegistry is initialized
@@ -31,8 +42,11 @@ export function handlePositionDeployed(event: PositionDeployedEvent): void {
   position.strategyId = event.params.strategyId
   position.createdAt = event.block.timestamp
   position.openedAt = BIGINT_ZERO
+  position.closedAt = BIGINT_ZERO
   position.txCount = BIGINT_ZERO
   position.totalAllocated = BIGINT_ZERO
+  position.totalDeposited = BIGINT_ZERO
+  position.totalDepositedUSD = BIGINT_ZERO
   position.pricePerShare = BIGINT_ZERO
   position.asset = ADDRESS_ZERO
   position.isOutdated = false
@@ -41,9 +55,9 @@ export function handlePositionDeployed(event: PositionDeployedEvent): void {
 
   registry.positionCount = registry.positionCount.plus(BIGINT_ONE)
 
-  position.save()
   // create new datasource for the position
   PositionTemplate.create(event.params.position)
+  position.save()
 
   smartAccount.save()
   registry.save()
