@@ -5,18 +5,20 @@
   "license": "MIT",
   "scripts": {
     "eslint": "eslint . --ext .ts --fix",
-    "build": "run-s codegen && graph build",
-    "codegen": "graph codegen",
+    "build": "bash scripts/build_and_deploy.sh",
+    "deploy": "bash scripts/build_and_deploy.sh --deploy",
     "test": "graph test -d"
   },
   "devDependencies": {
-    "@graphprotocol/graph-cli": "^0.94.0",
-    "@graphprotocol/graph-ts": "^0.37.0",
+    "@graphprotocol/graph-cli": "^0.96.0",
+    "@graphprotocol/graph-ts": "0.38.1",
+    "@types/node": "22.15.32",
     "@typescript-eslint/eslint-plugin": "^8.20.0",
     "@typescript-eslint/parser": "^8.20.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "matchstick-as": "^0.6.0",
+    "mustache": "^4.2.0",
     "prettier": "^3.4.2",
     "typescript": "^5.7.3"
   }

@@ -10,5 +10,13 @@ node_modules
 # Eslint
 .eslintcache
 
-# build
+# build/deploy
 generated
+build
+subgraph.yaml
+/src/utils/address.ts
+
+# matchstick
+tests/.bin/
+tests/.docker/
+tests/.latest.json

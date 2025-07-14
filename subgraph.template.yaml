@@ -1,0 +1,69 @@
+specVersion: 1.2.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: PositionRegistry
+    network: {{network}}
+    source:
+      abi: PositionRegistry
+      address: "{{positionRegistry}}"
+      startBlock: {{startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      file: ./src/mappings/position-registry.ts
+      entities:
+        - PositionRegistry
+        - Position
+        - Strategy
+        - SmartAccount
+        - PositionDailyData
+        - PositionRegistryDailyData
+        - SmartAccountDailyData
+      abis:
+        - name: PositionRegistry
+          file: ./abis/PositionRegistry.json
+      eventHandlers:
+        - event: StrategyAdded(indexed uint256,indexed address,indexed address)
+          handler: handleStrategyAdded
+        - event: PositionDeployed(indexed address,indexed uint256,indexed address)
+          handler: handlePositionDeployed
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: IsActiveUpdated(indexed uint256,bool)
+          handler: handleIsActiveUpdated
+        - event: FeePolicyUpdated(indexed uint256,address)
+          handler: handleFeePolicyUpdated
+        - event: ImplementationUpdated(indexed uint256,address)
+          handler: handleImplementationUpdated
+        - event: FeeCollectorUpdated(indexed address,indexed address)
+          handler: handleFeeCollectorUpdated
+templates:
+  - kind: ethereum/contract
+    name: Position
+    network: {{network}}
+    source:
+      abi: Position
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      file: ./src/mappings/position.ts
+      entities:
+        - Position
+      abis:
+        - name: Position
+          file: ./abis/Position.json
+        - name: MasterOracle
+          file: ./abis/MasterOracle.json
+      eventHandlers:
+        - event: PositionOpened(indexed address,uint256)
+          handler: handlePositionOpened
+        - event: FeatureCalled(uint256,uint256)
+          handler: handleFeatureCalled
+        - event: PositionClosed(indexed address,uint256)
+          handler: handlePositionClosed
