@@ -1,6 +1,6 @@
 import { PositionOpened, PositionClosed, FeatureCalled } from '../../generated/templates/Position/Position'
 import { Position } from '../../generated/schema'
-import { ADDRESS_ZERO, BIG_INT_ONE, BIG_INT_ZERO } from '../utils/constants'
+import { ADDRESS_ZERO, BIG_DECIMAL_ZERO, BIG_INT_ONE, BIG_INT_ZERO } from '../utils/constants'
 import { PositionInfo } from '../utils/position-info'
 import { updateDailyData } from '../utils/data-handler'
 import { quoteTokenToUsd } from '../utils/oracle'
@@ -35,7 +35,7 @@ export function handlePositionClosed(event: PositionClosed): void {
   position.borrowToken = ADDRESS_ZERO
   position.pricePerShare = BIG_INT_ZERO
   position.totalDeposited = BIG_INT_ZERO
-  position.totalDepositedUSD = BIG_INT_ZERO
+  position.totalDepositedUSD = BIG_DECIMAL_ZERO
   position.totalBorrowed = BIG_INT_ZERO
 
   const info = new PositionInfo(event.address)

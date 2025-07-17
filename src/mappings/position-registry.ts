@@ -11,7 +11,7 @@ import {
 } from '../../generated/PositionRegistry/PositionRegistry'
 import { PositionRegistry, Position, Strategy, SmartAccount } from '../../generated/schema'
 import { Position as PositionTemplate } from '../../generated/templates'
-import { ADDRESS_ZERO, BIG_INT_ONE, BIG_INT_ZERO } from '../utils/constants'
+import { ADDRESS_ZERO, BIG_DECIMAL_ZERO, BIG_INT_ONE, BIG_INT_ZERO } from '../utils/constants'
 
 export function loadOrCreateSmartAccount(id: Address): SmartAccount {
   let smartAccount = SmartAccount.load(id)
@@ -46,7 +46,7 @@ export function handlePositionDeployed(event: PositionDeployedEvent): void {
   position.txCount = BIG_INT_ZERO
   position.totalAllocated = BIG_INT_ZERO
   position.totalDeposited = BIG_INT_ZERO
-  position.totalDepositedUSD = BIG_INT_ZERO
+  position.totalDepositedUSD = BIG_DECIMAL_ZERO
   position.pricePerShare = BIG_INT_ZERO
   position.asset = ADDRESS_ZERO
   position.isOutdated = false
