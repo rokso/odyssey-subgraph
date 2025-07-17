@@ -1,16 +1,9 @@
 import { PositionOpened, PositionClosed, FeatureCalled } from '../../generated/templates/Position/Position'
-import { MasterOracle } from '../../generated/templates/Position/MasterOracle'
 import { Position } from '../../generated/schema'
 import { ADDRESS_ZERO, BIGINT_ONE, BIGINT_ZERO } from '../utils/constants'
 import { PositionInfo } from '../utils/position-info'
 import { updateDailyData } from '../utils/data-handler'
-import { Address, BigInt, Bytes } from '@graphprotocol/graph-ts'
-import { MASTER_ORACLE } from '../utils/address'
-
-function quoteTokenToUsd(token: Bytes, amount: BigInt): BigInt {
-  const oracle: MasterOracle = MasterOracle.bind(MASTER_ORACLE)
-  return oracle.quoteTokenToUsd(Address.fromBytes(token), amount)
-}
+import { quoteTokenToUsd } from '../utils/oracle'
 
 export function handlePositionOpened(event: PositionOpened): void {
   const position = Position.load(event.address)!

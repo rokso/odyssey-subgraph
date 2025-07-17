@@ -9,6 +9,7 @@ import {
 } from '../../generated/schema'
 import { BIGINT_ZERO } from './constants'
 import { POSITION_REGISTRY } from './address'
+import { quoteTokenToUsd } from './oracle'
 
 function loadOrCreateRegistryDailyData(
   positionRegistry: PositionRegistry,
@@ -69,7 +70,7 @@ function updatePositionDailyData(
     positionDailyData.blockTimestamp = blockTimestamp
     positionDailyData.pricePerShare = position.pricePerShare
     positionDailyData.totalDeposited = position.totalDeposited
-    positionDailyData.totalDepositedUSD = position.totalDepositedUSD
+    positionDailyData.totalDepositedUSD = quoteTokenToUsd(position.asset, position.totalDeposited)
     positionDailyData.position = position.id
     positionDailyData.save()
   }
