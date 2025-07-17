@@ -39,7 +39,7 @@ type Position @entity {
   # total assets deposited in this position.
   totalDeposited: BigInt!
   # USD representation of totalDeposited
-  totalDepositedUSD: BigInt!
+  totalDepositedUSD: BigDecimal!
   # Optional: borrow token address.
   borrowToken: Bytes
   # Optional: total assets borrowed by this position.
@@ -82,7 +82,7 @@ type PositionRegistryDailyData @entity {
   id: String!
   dayStartTimestamp: Int!
   blockTimestamp: BigInt!
-  totalDepositedUSD: BigInt!
+  totalDepositedUSD: BigDecimal!
   positionCount: BigInt!
   smartAccountCount: BigInt!
   positionRegistry: PositionRegistry!
@@ -92,7 +92,7 @@ type SmartAccountDailyData @entity {
   id: String!
   dayStartTimestamp: Int!
   blockTimestamp: BigInt!
-  totalDepositedUSD: BigInt!
+  totalDepositedUSD: BigDecimal!
   smartAccount: SmartAccount!
 }
 
@@ -101,7 +101,7 @@ type PositionDailyData @entity {
   dayStartTimestamp: Int!
   blockTimestamp: BigInt!
   totalDeposited: BigInt!
-  totalDepositedUSD: BigInt!
+  totalDepositedUSD: BigDecimal!
   pricePerShare: BigInt!
   position: Position!
 }

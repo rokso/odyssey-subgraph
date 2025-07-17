@@ -14,7 +14,7 @@ import {
 import { handleOwnershipTransferred, handlePositionDeployed } from '../../src/mappings/position-registry'
 import { PositionOpened } from '../../generated/templates/Position/Position'
 import { handlePositionOpened } from '../../src/mappings/position'
-import { BIGINT_ZERO } from '../../src/utils/constants'
+import { BIG_INT_ZERO } from '../../src/utils/constants'
 
 export function createPositionDeployedEvent(owner: Address, strategyId: BigInt, position: Address): PositionDeployed {
   const event = changetype<PositionDeployed>(newMockEvent())
@@ -63,7 +63,7 @@ export function mockPositionFunctions(totalAllocated: BigInt, pricePerShare: Big
     ethereum.Value.fromUnsignedBigInt(totalAllocated),
   ])
   createMockedFunction(POSITION_ADDRESS, 'borrowedAmount', 'borrowedAmount():(uint256)').returns([
-    ethereum.Value.fromUnsignedBigInt(BIGINT_ZERO),
+    ethereum.Value.fromUnsignedBigInt(BIG_INT_ZERO),
   ])
   createMockedFunction(POSITION_ADDRESS, 'isOutdated', 'isOutdated():(bool)').returns([
     ethereum.Value.fromBoolean(isOutdated),
