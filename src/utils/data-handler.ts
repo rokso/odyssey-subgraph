@@ -7,7 +7,7 @@ import {
   SmartAccount,
   SmartAccountDailyData,
 } from '../../generated/schema'
-import { BIGINT_ZERO } from './constants'
+import { BIG_INT_ZERO } from './constants'
 import { POSITION_REGISTRY } from './address'
 import { quoteTokenToUsd } from './oracle'
 
@@ -25,7 +25,7 @@ function loadOrCreateRegistryDailyData(
     dailyData.blockTimestamp = blockTimestamp
     dailyData.positionCount = positionRegistry.positionCount
     dailyData.smartAccountCount = positionRegistry.smartAccountCount
-    dailyData.totalDepositedUSD = BIGINT_ZERO
+    dailyData.totalDepositedUSD = BIG_INT_ZERO
     dailyData.positionRegistry = positionRegistry.id
     dailyData.save()
   }
@@ -44,7 +44,7 @@ function loadOrCreateSmartAccountDailyData(
     dailyData = new SmartAccountDailyData(dailyDataId)
     dailyData.dayStartTimestamp = dayStartTimestamp
     dailyData.blockTimestamp = blockTimestamp
-    dailyData.totalDepositedUSD = BIGINT_ZERO
+    dailyData.totalDepositedUSD = BIG_INT_ZERO
     dailyData.smartAccount = smartAccount.id
     dailyData.save()
   }
@@ -58,9 +58,9 @@ function updatePositionDailyData(
   blockTimestamp: BigInt,
 ): PositionDailyData | null {
   // Position never opened or position is closed
-  if (position.openedAt.equals(BIGINT_ZERO) || position.closedAt.gt(BIGINT_ZERO)) return null
+  if (position.openedAt.equals(BIG_INT_ZERO) || position.closedAt.gt(BIG_INT_ZERO)) return null
 
-  if (position.totalDeposited.equals(BIGINT_ZERO)) return null
+  if (position.totalDeposited.equals(BIG_INT_ZERO)) return null
 
   const dailyDataId = position.id.toHex().concat('-').concat(dayID.toString())
   let positionDailyData = PositionDailyData.load(dailyDataId)
@@ -84,7 +84,7 @@ function updateSmartAccountDailyData(
   blockTimestamp: BigInt,
 ): SmartAccountDailyData {
   let saDailyData = loadOrCreateSmartAccountDailyData(smartAccount, dayID, dayStartTimestamp, blockTimestamp)
-  let totalDepositedUSD = BIGINT_ZERO
+  let totalDepositedUSD = BIG_INT_ZERO
 
   const positions = smartAccount.positions.load()
   for (let j = 0; j < positions.length; j++) {
@@ -109,7 +109,7 @@ function updateRegistryDailyData(
   blockTimestamp: BigInt,
 ): void {
   let prDailyData = loadOrCreateRegistryDailyData(positionRegistry, dayID, dayStartTimestamp, blockTimestamp)
-  let totalDepositedUSD = BIGINT_ZERO
+  let totalDepositedUSD = BIG_INT_ZERO
 
   const smartAccounts = positionRegistry.smartAccounts.load()
   for (let i = 0; i < smartAccounts.length; i++) {
@@ -126,7 +126,7 @@ function updateRegistryDailyData(
 
 export function updateDailyData(blockTimestamp: BigInt): void {
   const positionRegistry = PositionRegistry.load(POSITION_REGISTRY)
-  if (!positionRegistry || positionRegistry.positionCount.equals(BIGINT_ZERO)) return
+  if (!positionRegistry || positionRegistry.positionCount.equals(BIG_INT_ZERO)) return
 
   // TODO fix this to use BigInt or at least I64
   const timestamp = blockTimestamp.toI32()
