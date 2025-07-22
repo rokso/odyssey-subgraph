@@ -11,13 +11,13 @@ import {
 } from '../../generated/PositionRegistry/PositionRegistry'
 import { PositionRegistry, Position, Strategy, SmartAccount } from '../../generated/schema'
 import { Position as PositionTemplate } from '../../generated/templates'
-import { ADDRESS_ZERO, BIGINT_ONE, BIGINT_ZERO } from '../utils/constants'
+import { ADDRESS_ZERO, BIG_DECIMAL_ZERO, BIG_INT_ONE, BIG_INT_ZERO } from '../utils/constants'
 
 export function loadOrCreateSmartAccount(id: Address): SmartAccount {
   let smartAccount = SmartAccount.load(id)
   if (!smartAccount) {
     smartAccount = new SmartAccount(id)
-    smartAccount.positionCount = BIGINT_ZERO
+    smartAccount.positionCount = BIG_INT_ZERO
     smartAccount.positionRegistry = ADDRESS_ZERO // set default value
     smartAccount.save()
   }
@@ -33,7 +33,7 @@ export function handlePositionDeployed(event: PositionDeployedEvent): void {
   const smartAccount = loadOrCreateSmartAccount(event.params.owner)
   if (smartAccount.positionRegistry == ADDRESS_ZERO) {
     smartAccount.positionRegistry = registry.id
-    registry.smartAccountCount = registry.smartAccountCount.plus(BIGINT_ONE)
+    registry.smartAccountCount = registry.smartAccountCount.plus(BIG_INT_ONE)
   }
 
   // create new position entity
@@ -41,19 +41,19 @@ export function handlePositionDeployed(event: PositionDeployedEvent): void {
   position.owner = smartAccount.id
   position.strategyId = event.params.strategyId
   position.createdAt = event.block.timestamp
-  position.openedAt = BIGINT_ZERO
-  position.closedAt = BIGINT_ZERO
-  position.txCount = BIGINT_ZERO
-  position.totalAllocated = BIGINT_ZERO
-  position.totalDeposited = BIGINT_ZERO
-  position.totalDepositedUSD = BIGINT_ZERO
-  position.pricePerShare = BIGINT_ZERO
+  position.openedAt = BIG_INT_ZERO
+  position.closedAt = BIG_INT_ZERO
+  position.txCount = BIG_INT_ZERO
+  position.totalAllocated = BIG_INT_ZERO
+  position.totalDeposited = BIG_INT_ZERO
+  position.totalDepositedUSD = BIG_DECIMAL_ZERO
+  position.pricePerShare = BIG_INT_ZERO
   position.asset = ADDRESS_ZERO
   position.isOutdated = false
 
-  smartAccount.positionCount = smartAccount.positionCount.plus(BIGINT_ONE)
+  smartAccount.positionCount = smartAccount.positionCount.plus(BIG_INT_ONE)
 
-  registry.positionCount = registry.positionCount.plus(BIGINT_ONE)
+  registry.positionCount = registry.positionCount.plus(BIG_INT_ONE)
 
   // create new datasource for the position
   PositionTemplate.create(event.params.position)
@@ -99,8 +99,8 @@ export function handleOwnershipTransferred(event: OwnershipTransferred): void {
   if (!positionRegistry) {
     positionRegistry = new PositionRegistry(event.address)
     positionRegistry.feeCollector = PositionRegistryContract.bind(event.address).feeCollector()
-    positionRegistry.positionCount = BIGINT_ZERO
-    positionRegistry.smartAccountCount = BIGINT_ZERO
+    positionRegistry.positionCount = BIG_INT_ZERO
+    positionRegistry.smartAccountCount = BIG_INT_ZERO
   }
   // update the owner
   positionRegistry.owner = event.params.newOwner
